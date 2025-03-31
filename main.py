@@ -2,51 +2,46 @@ import socket
 import argparse
 
 
-def scan_tcp_port(host, port):
+def scan_tcp_port(host: str, port: int) -> None:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-        sock.settimeout(0.1)
+        sock.settimeout(0.3)
         if sock.connect_ex((host, port)) == 0:
             print(f"port {port}|tcp opened")
+        else:
+            print(f"port {port}|tcp closed")
 
 
-def scan_udp_port(host, port):
+def scan_udp_port(host: str, port: int) -> None:
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
-        sock.settimeout(0.1)
+        sock.settimeout(0.3)
         try:
-            sock.sendto(b'', (host, port))
-            sock.recvfrom(1024)
+            sock.sendto(b'aaa\r\n\r\n', (host, port))
+            sock.recv(1024)
+            print(f"port {port}|udp opened")
         except socket.timeout:
             pass
         except socket.error:
             print(f"port {port}|udp closed")
 
 
-def scan_ports(host, start_port, end_port):
+def scan_ports(host: str, ports: list[int]) -> None:
     print("Scanning ports...")
-    for port in range(start_port, end_port + 1):
+    for port in ports:
         scan_tcp_port(host, port)
         scan_udp_port(host, port)
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="Scan open ports on a given host")
     parser.add_argument("host", type=str, help="Target host (localhost or IP address)")
-    parser.add_argument("start", type=int, help="Start port")
-    parser.add_argument("end", type=int, help="End port")
+    parser.add_argument("ports", type=str, help="Ports")
 
     args = parser.parse_args()
 
-    if not (1 <= args.start <= 65535):
-        print("Error: start port must be in the range 1-65535")
-        return
-    if not (1 <= args.end <= 65535):
-        print("Error: end port must be in the range 1-65535")
-        return
-    if args.start > args.end:
-        print("Error: start port there can't be more end port")
-        return
+    ranges = [x.split('-') for x in args.ports.split(',')]
+    ports = [x for y in ranges for x in range(int(y[0]), int(y[-1]) + 1)]
 
-    scan_ports(args.host, args.start, args.end)
+    scan_ports(args.host, ports)
 
 
 if __name__ == "__main__":
