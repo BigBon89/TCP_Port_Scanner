@@ -1,13 +1,32 @@
 import socket
 import argparse
 
+
+def scan_tcp_port(host, port):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.settimeout(0.1)
+        if sock.connect_ex((host, port)) == 0:
+            print(f"port {port}|tcp opened")
+
+
+def scan_udp_port(host, port):
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+        sock.settimeout(0.1)
+        try:
+            sock.sendto(b'', (host, port))
+            sock.recvfrom(1024)
+        except socket.timeout:
+            pass
+        except socket.error:
+            print(f"port {port}|udp closed")
+
+
 def scan_ports(host, start_port, end_port):
     print("Scanning ports...")
     for port in range(start_port, end_port + 1):
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-            sock.settimeout(0.1)
-            if sock.connect_ex((host, port)) == 0:
-                print(f"port {port} opened")
+        scan_tcp_port(host, port)
+        scan_udp_port(host, port)
+
 
 def main():
     parser = argparse.ArgumentParser(description="Scan open ports on a given host")
@@ -28,6 +47,7 @@ def main():
         return
 
     scan_ports(args.host, args.start, args.end)
+
 
 if __name__ == "__main__":
     main()
