@@ -15,7 +15,7 @@ def scan_udp_port(host: str, port: int) -> None:
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
         sock.settimeout(0.3)
         try:
-            sock.sendto(b'aaa\r\n\r\n', (host, port))
+            sock.sendto(b'req\r\n\r\n', (host, port))
             sock.recv(1024)
             print(f"port {port}|udp opened")
         except socket.timeout:
